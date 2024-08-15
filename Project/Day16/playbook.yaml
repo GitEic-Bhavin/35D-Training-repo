@@ -1,0 +1,54 @@
+---
+- name: Install packages
+  hosts: worker
+  become: true
+  tasks:
+
+    - name: Install packages
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: true
+      with_items:
+        - sysstat
+        - net-tools
+        - zip
+        - unzip
+        - openssh-client
+
+    - name: Install nginx
+      apt: 
+        name: nginx
+        state: present
+        update_cache: true
+      register: nginx
+    - debug:
+        var: nginx.stdout
+
+    - name: Config Nginx Service
+      service:
+        name: nginx
+        state: started
+        enabled: true
+      register: service
+    - debug:
+        var: service.stdout
+
+    - name: Creating files
+      ansible.builtin.file:
+        path: /home/ubuntu/Day16.txt
+        state: touch 
+
+    - name: Change Ownership and Give file permission
+      ansible.builtin.file:
+        path: /home/ubuntu/Day16.txt
+        group: ubuntu
+        owner: ubuntu
+        mode: 400
+
+    - name: Delete files
+      ansible.builtin.file:
+        path: /home/ubuntu/Day16.txt
+        state: absent
+
+  

@@ -1,0 +1,45 @@
+Assynchronise
+Running in background
+
+Synchronise
+
+
+What is API server ?
+What is API ? -- its a just bride to connect both end
+
+API server -- Human can interact & Communicate, execute command, give instruction to use kubernetes servies via API server.
+
+Schedular -- Any new containers created , it assign in a pods or deployed in worker nodes automatically by refer your conf file.
+It distributes load in each pods.
+Schedule a job, creation & distribution of jobs happens in master that will deploy & distibute in all worker nodes.
+
+
+Kubectl : whatever exposed by API server , it deploy/implement in all worker nodes.
+
+Kube-proxy : Making communications between pods, services.
+user accsisible your website by only kube-proxy.
+
+
+
+Other Components
+
+INGRESS :- is a InBound Rule ,To distribute the traffic.
+if user comes from services.example.com/service1 then my websites, these part like login page it can see. 
+to use this login page there is suppose 4 pods will be used. for high availability.
+
+if user comes from service2 then it can see my website othre part .
+
+
+Deployment is not a components.
+
+Services take traffic & Distribute it to deployments.Deployments have multiple pods
+
+
+Kubelet is bridge between Master Node & Worker Node
+
+minikube is just containirized version of kubernetes.
+
+
+Kubeadmin -- It automatically install, deploy kubernetes components for both master nodes, & worker nodes.
+
+minikube is easiest way for testing purpose. kubeadmin is not easiest way.

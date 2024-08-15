@@ -1,0 +1,68 @@
+---
+# tasks file for nodejs-backend
+# - name: Install the gpg key for nodejs LTS
+#   ansible.builtin.apt_key:
+#     url: "http://deb.nodesource.com/gpgkey/nodesource.gpg.key"
+#     state: present
+#     # update_cache: true This module does not support in apt_key module
+
+# - name: Install the nodejs LTS repos
+#   ansible.builtin.apt_repository:
+#     repo: "deb https://deb.nodesource.com/node_8.x {{ ansible_distribution_release }} main"
+#     state: present
+#     # update_cache: yes
+
+- name: Install the nodejs
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: true
+  with_items: 
+    - nodejs
+    - npm 
+
+- name: Put Your Nodejs App into Root Path "my-nodejs"
+  ansible.builtin.copy: 
+    src: files/package.json 
+    dest: /var/www/my-nodejs
+    # state: present
+
+- name: copy package-lock.json 
+  ansible.builtin.copy:
+    src: files/package-lock.json
+    dest: /var/www/my-nodejs
+    force: true
+    # state: present
+
+
+- name: Copy nodejs app 
+  ansible.builtin.copy: 
+    src: files/index.js
+    dest: /var/www/my-nodejs
+
+- name: npm install to install all dependencies defined in package.json
+  shell: cd /var/www/my-nodejs/ && npm install
+  args:
+    chdir: /var/www/my-nodejs/
+  # notify: 
+  #   - restart nginx
+
+- name: run nodejs app
+  shell: 'nohup node /var/www/my-nodejs/index.js > /tmp/nohup.out 2>&1 &'
+  args:
+    chdir: /var/www/my-nodejs/
+#   register: node
+# - debug:
+#     vars: node.stdout
+#   notify: 
+#     - reload nginx
+
+# - name: Run Nodejs App in Background to exit from loop and task will executed and print changed.
+#   shell: 'nohup node /var/www/my-nodejs/index.js > /tmp/test-app/nohup.out 2>&1 &'
+#   args:
+#     chdir: /var/www/my-nodejs/
+
+
+    
+  
+

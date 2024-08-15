@@ -1,0 +1,52 @@
+# apiVersion: apps/v1
+
+# kind: Deployment
+
+# metadata:
+#   name: nginx-deployment-day9
+
+# spec:
+
+#   replicas: 2
+
+#   selector:
+#     matchLabels:
+#       app: day9-nginx
+
+#   template:
+#     metadata:
+#       labels:
+#         app: day9-nginx
+
+#     spec:
+#       containers:
+#       - name: day9-nginx-container
+#         image: bhavin1099/day9nginx:v1
+#         ports:
+#         - containerPort: 80
+
+# frontend-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: bhavin1099/nginxwget:v1
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: "10m"
+          limits:
+            cpu: "50m"

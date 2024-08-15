@@ -1,0 +1,78 @@
+---
+# tasks file for mysql-database
+- name: Install Python 3
+  become: true
+  package:
+    name: "{{ item }}"
+    state: present
+    update_cache: true
+  with_items:
+    - mysql-client
+    - python3-mysqldb
+    - libmysqlclient-dev
+
+- name: Install MySQL
+  apt:
+    name: mysql-server
+    state: present
+  become: true
+
+- name: Start MySQL service
+  ansible.builtin.service:
+    name: mysql
+    state: started
+    enabled: true
+  become: true
+
+- name: Set up MySQL root user password
+  ansible.builtin.mysql_user:
+    name: root
+    password: root
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: Remove Anonymous Users
+  mysql_user:
+    name: test
+    state: absent
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+
+- name: Ensure no user named 'db_user'@'localhost' exists, also passing in the auth credentials.
+  mysql_user:
+    name: mysql
+    state: absent
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: Create Database
+  mysql_db:
+    name: "{{ mysql_db_name }}"
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+
+- name: Create MySQL user with password with access from any host (0.0.0.0)
+  mysql_user:
+    name: "{{ mysql_user }}"
+    password: "{{ mysql_user_password }}"
+    state: present
+    host: "%"
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+
+# If you want to give all priv to your database only. use priv: "{{ your_db_name }}.*:ALL,GRANT"
+- name: Grant all privileges on all databases to a user from any host
+  mysql_user:
+    name: "{{ mysql_user }}"
+    password: "{{ mysql_user_password }}"
+    priv: '*.*:ALL,GRANT'
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+

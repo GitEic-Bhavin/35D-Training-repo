@@ -1,0 +1,6 @@
+---
+# vars file for mysql
+mysql_root_password: root
+mysql_db_name: mysql-db
+mysql_user: mysql
+mysql_user_password: mysql

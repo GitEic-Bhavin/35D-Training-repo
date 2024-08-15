@@ -1,0 +1,8 @@
+---
+- name: Setup 3 tier webserver nginx, nodejs, mysql
+  hosts: webserver
+  become: true
+  roles:
+    - nginx-frontend
+    - nodejs-backend
+    - mysql-database

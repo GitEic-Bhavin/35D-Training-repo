@@ -1,0 +1,11 @@
+---
+# handlers file for nodejs-backend
+# - name: restart nginx
+#   ansible.builtin.service:
+#     name: nginx
+#     state: reloaded
+
+# - name: reload nginx
+#   ansible.builtin.service:
+#     name: nginx
+#     state: reload

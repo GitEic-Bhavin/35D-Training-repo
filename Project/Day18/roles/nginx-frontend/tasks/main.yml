@@ -1,0 +1,24 @@
+---
+# tasks file for nginx-frontend
+- name: Install nginx
+  apt: name=nginx state=present update_cache=true
+  notify:
+    - Start Nginx
+    - Enable Nginx
+
+- name: Allow HTTP & HTTPS connection
+  command: ufw allow 'Nginx Full'
+
+- name: Create Website Root Path
+  ansible.builtin.file:
+    path: /var/www/my-nodejs/
+    state: directory
+    owner: root
+    mode: '0755'
+
+- name: Copy nginx.conf to run nodejs app
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+  notify: 
+    - restart nginx

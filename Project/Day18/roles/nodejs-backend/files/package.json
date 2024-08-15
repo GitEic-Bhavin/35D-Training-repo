@@ -1,0 +1,16 @@
+{
+  "name": "nodejs-nginx-docker",
+  "version": "1.0.0",
+  "description": "Node.js app served by Nginx in Docker",
+  "main": "/var/www/my-nodejs/index.js", 
+  "scripts": {
+    "start": "node /var/www/my-nodejs/index.js"
+
+  },
+  "dependencies": {
+    "express": "^4.17.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.13"
+  }
+}

@@ -1,0 +1,29 @@
+---
+- name: Trying to access unavailable service
+  hosts: server01
+  tasks:
+    - name: Trying to access unavailable service
+      block:
+      - ansible.builtin.get_url:
+            url: http://be.jacpcldce.ac.in/govt/pdf/List%20of%20Institute%20with%20MQ_NRI%20and%20Entrance%20exam%20Bifurcation1.pdf
+            # url: http://t4.ftcdn.net/jpg/07/07/96/27/240_F_707962759_gAblhO2gDsXjX8hR9WRiuNMK9bVK2LZ3.jpg
+            dest: /home/ubuntu
+      - debug: 
+            msg: "Image is downloaded!"
+      rescue:
+      - debug: msg="Corrected Image is downloading!"
+      - ansible.builtin.get_url:
+            # url: http://t4.ftcdn.net/jpg/07/07/96/27/240_F_707962759_gAblhO2gDsXjX8hR9WRiuNMK9bVK2LZ3.jpg
+            url: http://be.jacpcldce.ac.in/govt/pdf/List%20of%20Institute%20with%20MQ_NRI%20and%20Entrance%20exam%20Bifurcation.pdf
+            dest: /home/ubuntu
+            
+    # - name: Sending an e-mail using Gmail SMTP servers
+    #   community.general.mail:
+    #     host: smtp.gmail.com
+    #     port: 587
+    #     username: username@gmail.com
+    #     password: mysecret
+    #     to: John Smith <john.smith@example.com>
+    #     subject: Ansible-report
+    #     body: System {{ ansible_hostname }} has been successfully provisioned.
+    #   delegate_to: localhost

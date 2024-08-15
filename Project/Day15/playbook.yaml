@@ -1,0 +1,40 @@
+---
+- name: Install Docker on target
+  hosts: webserver
+  become: true
+  tasks: 
+    - name: install dependencies for docker
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        update_cache: true
+        state: present
+      with_items:
+          - python3-pip
+          - python3
+          - docker.io
+
+    - name: Enable docker servcie
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Pulling docker image
+      community.docker.docker_image:
+        name: bhavin1099/day15-8
+        tag: v1
+        source: pull
+
+        
+
+    - name: Running docker container
+      community.docker.docker_container:
+        name: my-ansible-container
+        image: bhavin1099/day15-8:v1
+        state: started
+        restart_policy: always
+        ports:
+          - "81:80"
+
+        
+      

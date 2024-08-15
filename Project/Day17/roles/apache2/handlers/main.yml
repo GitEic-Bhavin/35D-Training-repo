@@ -1,0 +1,16 @@
+---
+# handlers file for apache2
+- name: Enable apache2 service
+  ansible.builtin.service:
+    name: apache2
+    enabled: true
+
+- name: Start apache2 service
+  ansible.builtin.service:
+    name: apache2
+    state: started
+
+- name: Reload Apache
+  ansible.builtin.service:
+    name: apache2
+    state: reloaded

@@ -1,0 +1,14 @@
+plugin: amazon.aws.aws_ec2
+regions:
+  - <Enter Your Region>
+filters:
+  instance-state-name:
+    - running
+  tag:Name:
+    - Bhavin
+hostnames:
+  -  ip-address
+compose:
+  ansible_host: public_ip_address
+  ansilbe_user: 'ubuntu'
+  ansilbe_ssh_private_key_file: '/Path/to/private_key_file.pem'

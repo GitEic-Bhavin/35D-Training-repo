@@ -1,0 +1,44 @@
+---
+# tasks file for apache2
+- name: Install apache2
+  become: true
+  ansible.builtin.apt:
+    name: apache2
+    state: present
+    update_cache: true
+  notify: 
+    - Enable apache2 service
+    - Start apache2 service
+
+- name: Allow HTTP & HTTPS connection
+  become: true
+  command: ufw allow 'Apache FUll'
+
+- name: Create Website ROOT PATH
+  ansible.builtin.file:
+    path: /var/www/my-website/
+    state: directory
+    owner: root
+    mode: '755' 
+    
+- name: Make Custom Apache2 Page 
+  template:
+    src: index.html.j2
+    dest: "/var/www/my-website/index.html"
+
+- name: Set up APache conf file for Root Path for find/serve your Website
+  template:
+    src: "files/apache.conf.j2"
+    dest: "/etc/apache2/sites-available/my-website.conf"
+
+- name: Enable new site
+  command: /usr/sbin/a2ensite my-website.conf
+  notify:
+    - Reload Apache
+
+- name: Disable default apache site
+  command: /usr/sbin/a2dissite 000-default.conf
+  notify:
+    - Reload Apache
+
+  

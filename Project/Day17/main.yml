@@ -1,0 +1,13 @@
+---
+- name: install apache2
+  hosts: webserver
+  become: true
+  roles:
+    - apache2
+    - packages
+  
+- name: Set up mysql for durpal
+  hosts: dataserver
+  become: true
+  roles:
+    - mysql

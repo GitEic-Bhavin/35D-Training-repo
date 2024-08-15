@@ -1,0 +1,46 @@
+pipeline {
+    agent any 
+    //   tools {
+    //     maven 'maven-3.9.0'
+    //   }
+
+    stages{
+        stage('Checkout') {
+            steps {
+                git branch: 'training', url: 'https://github.com/GitEic-Bhavin/35_Days_Training_repo.git'
+            }
+        }
+        stage('Build') {
+            steps {
+                script {
+
+                    withDockerRegistry(credentialsId: 'docker-cred') {
+                        sh "docker build -t bhavin1099/day15-${BUILD_NUMBER}:v1 -f Project/Day15/Dockerfile ."
+                 }
+
+
+                }
+            } 
+        }
+        stage('Push') {
+          steps {
+              script {
+                  withDockerRegistry(credentialsId: 'docker-cred') {
+                    sh "docker push bhavin1099/day15-${BUILD_NUMBER}:v1"
+                  }    
+              }
+            }
+        }
+
+        stage('Deploy Container'){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred') {
+                        def runContainer = docker.image("bhavin1099/day15-${BUILD_NUMBER}:v1").run("--name myday15-${BUILD_NUMBER}-container -d -p 80:80")
+
+                    }
+                }
+            }
+        }
+    }
+}
