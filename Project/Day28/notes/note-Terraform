@@ -1,0 +1,32 @@
+﻿Day 28 		Terraform
+
+
+terraform {
+	required_providers {
+		aws = {
+			source = “hashicorp/aws”
+			version = “~>4.16”
+		}
+	}
+	required_version = “>=1.2.0”
+	
+provider “aws” {
+	region = “us-east-2”
+}
+
+resource “aws_instance” “app_server” {
+	ami			= “ami-8302084”
+	instance_type	= “t2.micro”
+  
+	tags = {
+		Name = “Bhavin-Instance”
+	}
+}
+
+terraform init –It will download the provider if not exists in local.
+terraform fmt – It will Formate main.tf file for indentations.
+terraform validate – Validate Suntax error.
+terraform plan – Show whatever rasources will be deployed.
+terraform apply – Deploy the actual Resources in real time. 	
+terraform destroy – Destory all the resouces which are present in stack file.
+
