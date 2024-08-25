@@ -1,0 +1,97 @@
+﻿Terraform Modules
+To make simplicity for deploy multiple resources.
+
+Module Structure
+
+modules/
+├── ec2
+│   ├── main.tf
+│   └── variable.tf
+├── main.tf
+├── security_group
+│   ├── main.tf
+│   └── variable.tf
+└── vpc
+    ├── main.tf
+    └── variable.tf
+
+modules/main.tf – used for passing or override the varible values.
+
+terraform.tfvars
+instance_type = “t3.medium”
+region = “us-east-1”
+environment = “Production”
+instnace_name = “prod-ec2”
+
+This instance_type should be exists in the variable.tf file.
+
+modules/ec2/variable.tf -- 
+variable “instance_type” {
+	type = string
+}
+
+# here we did not give default = “t2.micor” Right ?
+# so, it will look for this value into terraform.tfvars 
+
+terraform.tfvars
+instance_type = “t2.micor”
+region = “us-east-1”
+
+# from here, the variable.tf file will fetch variable vaule.
+# if still value did not give in terraform.tfvars file, then it will ask to you to enter value in run time during terrafom apply, terraform plan.
+
+
+WorkSpace
+If you want to deploy same resources but with diff region, diff department, diff appilcations. You have to use workspace.
+
+All main.tf will remain same. But only terraform.tfvars file for each department, region, applications will be diff.
+
+You have to only apply this terraform.tfvars during apply.
+terraform.tfvars only use to assing value of variables in the variable.tf file.
+
+
+Manage State file on remote S3 location with DynamoDB tables
+
+DynamoDB Properties to be used
+aws dynamodb create-table \
+    --table-name terraform-state-lock \
+    --attribute-definitions AttributeName=LockID,AttributeType=S \
+    --key-schema AttributeName=LockID,KeyType=HASH \
+    --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
+    --region us-west-2
+
+
+Lock terraform.tfstate file
+Why ?
+Ex. we have 2 deveoper. D1 – Will manage and create vpc. D2 – Will manage and create EC2 Instance.
+If Both D1 and D2 will execute at same time. terrafom.tfstate file will not changed at same time.
+There are conflict generate.
+Nobody can not execute at same time. 
+If First Execution done completely then Second Execution will run.
+But, How Terraform will decide this is First Execution , this is Second Execution ?
+Based on LockID.
+Each LockID will assigned to Each Developer.
+While New Developer is added into team. A LockID will genereate for new deveoper.
+But, where this LockID will be save ?
+Locally we can’t save this LockID bcz, of Security reasons.
+We have to Manage this LockID in DynamoDB Database.
+While First Execution is runnig. The terrafom.tfstate file is lock for other all Developers.
+
+At a time only one Execution is possible.
+To setup Upload terrafom.tfstate file on Remote Server Directly.
+# main.tf
+
+provider "aws" {
+  region = var.region
+}
+
+resource "aws_instance" "web_server" {
+  ami           = "ami-0c55b159cbfafe1f0"  
+  instance_type = var.instance_type
+  tags = {
+    Name        = var.instance_name
+    Environment = var.environment
+  }
+}
+
+
