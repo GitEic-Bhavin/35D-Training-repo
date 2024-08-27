@@ -1,0 +1,397 @@
+# AWSTemplateFormatVersion: '2010-09-10'
+# Description: Make CloudFormation Template to deploy aws resources.
+
+# Parameters:
+#   CustomVpcCidr:
+#     Type: String
+#     Default: 10.0.0.0/16
+
+#   PubSubnet1CIDR:
+#     Type: String
+#     Default: 10.0.0.0/24
+
+#   PubSubnet2CIDR:
+#     Type: String
+#     Default: 10.0.16.0/24
+
+#   PvtSubnet1CIDR:
+#     Type: String
+#     Default: 10.0.32.0/24
+
+#   PvtSubnet2CIDR:
+#     Type: String
+#     Default: 10.0.48.0/24
+
+# # Create Resources
+# Resources:
+#   MyVPC:
+#     Type: AWS::EC2::VPC
+#     Properties:
+#       CidrBlock: !Ref CustomVpcCidr
+#       EnableDnsSupport: true
+#       EnableDnsHostnames: true
+#       Tags:
+#         - Key: Name
+#           Value: MyVPC-Bhavin
+
+#   PublicSubnet1:
+#     Type: AWS::EC2::Subnet
+#     Properties:
+#       VpcId: !Ref MyVPC
+#       CidrBlock: !Ref PubSubnet1CIDR
+#       AvailabilityZone: !Select [0, !GetAZs '']
+    
+#       MapPublicIpOnLaunch: true
+#       Tags:
+#         - Key: Name
+#           Value: Bhavin_pub_sub1
+
+#   PublicSubnet2:
+#     Type: AWS::EC2::Subnet
+#     Properties:
+#       VpcId: !Ref MyVPC
+#       CidrBlock: !Ref PubSubnet2CIDR
+#       AvailabilityZone: !Select [1, !GetAZs '']
+#       MapPublicIpOnLaunch: true
+#       Tags:
+#         - Key: Name
+#           Value: Bhavin_pub_sub2
+
+#   PrivateSubnet1:
+#     Type: AWS::EC2::Subnet
+#     VpcId: !Ref MyVPC
+#     CidrBlock: !Ref PvtSubnet1CIDR
+#     AvailabilityZone: !Select [0, !GetAZs '']
+#     MapPublicIpOnLaunch: true
+#     Tags:
+#       - Key: Name
+#         Value: Bhavin_pvt_sub1
+
+#   PrivateSubnet2:
+#     Type: AWS::EC2::Subnet
+#     VpcId: !Ref MyVPC
+#     CidrBlock: !Ref PvtSubnet2CIDR
+#     AvailabilityZone: !Select [1, !GetAZs '']
+#     MapPublicIpOnLaunch: true
+#     Tags:
+#       - Key: Name
+#         Value: Bhavin_pvt_sub2
+
+#   # Create IGW
+#   CreateIgw:
+#     Type: AWS::EC2::InternetGateway
+#     Properties:
+#       Tags:
+#         - Key: Name
+#           Value: Bhavin-Igw
+
+#   # Attach IGW into your Custom VPC 
+#   IgwAttachment:
+#     Type: AWS::EC2::VPCGatewayAttachment
+#     Properties:
+#       InternetGatewayId: !Ref CreateIgw
+#       VpcId: !Ref MyVPC
+
+#   # Create Public Route Table
+
+#   PubRtb:
+#     Type: AWS::EC2::RouteTable
+#     Properties:
+#       VpcId: !Ref MyVPC
+#       Tags:
+#         - Key: Name
+#           Value: Bhavin-Pub-rtb
+
+#   PublicRoute:
+#     Type: AWS::EC2::Route
+#     DependsOn: IgwAttachment
+#     Properties:
+#       RouteTableId: !Ref PubRtb
+#       DestinationCidrBlock: 0.0.0.0/0
+#       GatewayId: !Ref CreateIgw
+
+#   # Public Subnet Associations
+#   PublicSubnet1RouteTableAssociation:
+#     Type: AWS::EC2::SubnetRouteTableAssociation
+#     Properties:
+#       SubnetId: !Ref PublicSubnet1
+#       RouteTableId: !Ref PubRtb
+
+#   PublicSubnet2RouteTableAssociation:
+#     Type: AWS::EC2::SubnetRouteTableAssociation
+#     Properties:
+#       SubnetId: !Ref PublicSubnet2
+#       RouteTableId: !Ref PubRtb
+
+#   # Create Private Route Table
+#   PvtRtb:
+#     Type: AWS::EC2::RouteTable
+#     Properties:
+#       VpcId: !Ref MyVPC
+#       Tags:
+#         - Key: Name
+#           Value: Bhavin-pvt-rtb
+
+#   # Private Subnet Association in route table
+#   PrivateSubnet1RouteTableAssociation:
+#     Type: AWS::EC2::SubnetRouteTableAssociation
+#     Properties:
+#       SubnetId: !Ref PrivateSubnet1
+#       RouteTableId: !Ref PvtRtb
+
+#   PrivateSubnet2RouteTableAssociation:
+#     Type: AWS::EC2::SubnetRouteTableAssociation
+#     Properties:
+#       SubnetId: !Ref PrivateSubnet2
+#       RouteTableId: !Ref PvtRtb
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Make CloudFormation Template to deploy AWS resources.
+
+Parameters:
+  CustomVpcCidr:
+    Type: String
+    Default: '10.0.0.0/16'
+
+  PubSubnet1CIDR:
+    Type: String
+    Default: '10.0.0.0/24'
+
+  PubSubnet2CIDR:
+    Type: String
+    Default: '10.0.16.0/24'
+
+  PvtSubnet1CIDR:
+    Type: String
+    Default: '10.0.32.0/24'
+
+  PvtSubnet2CIDR:
+    Type: String
+    Default: '10.0.48.0/24'
+
+  Ec2Id:
+    Type: String
+    Default: 'ami-085f9c64a9b75eed5'  
+
+  InstanceType:
+    Type: String
+    Default: 't2.micro'
+
+  SSHKeyName:
+    Type: String
+    Default: 'bhavincf'
+  
+  MasterUsername:
+    Type: String
+    Default: 'admin'
+
+  MasterUserPassword:
+    Type: String
+    Default: 'admin1234'  
+
+Resources:
+  MyVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref CustomVpcCidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: MyVPC-Bhavin
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !Ref PubSubnet1CIDR
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Bhavin_pub_sub1
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !Ref PubSubnet2CIDR
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Bhavin_pub_sub2
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !Ref PvtSubnet1CIDR
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: Bhavin_pvt_sub1
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !Ref PvtSubnet2CIDR
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: Bhavin_pvt_sub2
+
+  # Create IGW
+  CreateIgw:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: Bhavin-Igw
+
+  # Attach IGW to your Custom VPC 
+  IgwAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref CreateIgw
+      VpcId: !Ref MyVPC
+
+  # Create Public Route Table
+  PubRtb:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: Bhavin-Pub-rtb
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: IgwAttachment
+    Properties:
+      RouteTableId: !Ref PubRtb
+      DestinationCidrBlock: '0.0.0.0/0'
+      GatewayId: !Ref CreateIgw
+
+  # Public Subnet Associations
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PubRtb
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PubRtb
+
+  # Create Private Route Table
+  PvtRtb:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: Bhavin-pvt-rtb
+
+  # Private Subnet Route Table Associations
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PvtRtb
+
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PvtRtb
+
+# Create EC2 SG
+
+  CreateEc2Sg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Bhavin-Cf-Ec2-Sg
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic
+       
+  CreateRdsSg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow Request from Ec2 SG into Rds SG
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !Ref CreateEc2Sg
+
+# Create EC2 Instance
+  WebServerEc2:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs '']
+      ImageId: !Ref Ec2Id
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref SSHKeyName
+      SecurityGroupIds:
+      - !Ref CreateEc2Sg
+      SubnetId: !Ref PublicSubnet1
+      UserData: !Base64
+        Fn::Sub: | 
+          #!/bin/bash
+          sudo apt-get update -y
+          sudo apt-get install -y nginx mysql-client
+          sudo systemctl start nginx
+          sudo systemctl enable nginx
+
+      Tags:
+      - Key: Name
+        Value: Bhavin-cf-ec2
+
+# Create RDS 
+
+  CreateRdsInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceClass: 'db.t3.micro'
+      Engine: MySQL
+      MasterUsername: !Ref MasterUsername
+      MasterUserPassword: !Ref MasterUserPassword
+      AllocatedStorage: 20
+      DBSubnetGroupName: !Ref RdsDbSubnetGroup
+      VPCSecurityGroups: 
+      - !Ref CreateRdsSg
+
+# Create RDS DB SunbetGroup to deploy RDS Instance in this pvt subnet
+  RdsDbSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Create DB Subnet Group for RDS to deploy in your custom vpc
+      SubnetIds:
+      - !Ref PrivateSubnet1
+      - !Ref PrivateSubnet2
