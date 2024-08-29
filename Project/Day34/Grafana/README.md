@@ -59,7 +59,9 @@ localhost:3000
 
 ![alt text](p1/GrafanaWebinterface.png)
 
+**You can refer Grafana from Grafana Docs**
 
+[Grafana Installation](https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/)
 
 
 
