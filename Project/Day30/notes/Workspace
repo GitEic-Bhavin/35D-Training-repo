@@ -1,0 +1,228 @@
+﻿Terraform		Workspace
+To maintain multiple terraform.tfstate file.
+
+
+
+
+
+If we use the local backend for storing Terraform state, Terraform creates a file called terraform.tfstate to store the state of the applied configuration. However, in scenarios where you want to use the same configuration for different contexts, separate states might be necessary with same configuration.
+Workspaces allows you to separate your state and infrastructure without changing anything in your code when you wanted the same exact code base to deploy to multiple environments without overlap. i.e. Workspaces help to create multiple state files for set of same terraform configuration files.
+
+We can use multiple aws profile in .aws/config , .aws/credentials while working on workspace.
+Workspace for use same config file, main.tf , variable.tf etc. For multiple Environment like Prod, Dev, Staging, Testing.
+Here, terraform.tfstate file will remain same for all Environment like Prod, Dev, Staging, Testing but terraform.tfstate file will isolated from each environments.
+
+For all workspace only single main.tf file will use.
+For all workspace all each terraform.tfstate file will use for respected workspace.
+
+
+Create workspace
+terraform workspace new “workspace_name”
+terraform workspace new production
+terraform workspace new development
+terraform workspace new staging
+
+Lista all workspace
+terraform workspace list
+
+Switch into other workspace
+terraform workspace select “workspace_name”
+terraform workspace select prod
+
+# main.tf
+
+terraform {
+	required_providers {
+		aws = {
+			source = “hashicorp/aws”
+			version = “~>4.16”
+			}
+		}
+		required_version = “>=1.2.0”
+	}
+	provider “aws” {
+		region = “us-east-2”
+		profile = “dev”
+	}
+
+	# Define VPC Resources
+	resource “aws_vpc” “main” {
+		cidr_block = “10.0.0.0/16”
+	
+		tags = {
+			Name = “${terraform.workspace}-vpc”
+		}
+	}
+
+# variable.tf
+
+# Ask user to input aws access key and secret key”
+variable “aws_profile” {
+	type = string
+	description = “ The aws cli profile to use this workspace”
+}
+
+# output.tf
+
+output “vpc_id” {
+	value = aws_vpc.main.id
+}
+# To manage all state file of each workspace on remote server , use backend.tf
+
+terraform {
+  backend "s3" {
+    bucket = "bhavin-tfstate-s3"
+    # bucket = "terraformdemo24"
+    key            = "terraform.tfstate"
+    region         = "us-east-2"
+    encrypt        = true
+    dynamodb_table = "terraform_state-lock-bhavin"
+
+  }
+}
+
+# Supply variable value for aws_profile defined in the variable.tf file
+This will happens in production workspace
+terraform apply -var=”aws_profile=dev”
+
+To apply in staging workspace
+terraform workspace select staging
+
+terraform apply -var=”aws_profile=staging”
+
+To apply in development workspace
+terraform workspace select development
+
+terraform apply -var=”aws_profile=development”
+
+This will create state file in the,
+s3 > bhavin-tfstate-s3 > dev > terraform.tfstate
+s3 > bhavin-tfstate-s3 > prod > terraform.tfstate
+s3  > bhavin-tfstate-s3 > staging > terraform.tfstate
+
+when you want to  use diff backend.tf for diff workspace.
+
+Use .hcl instead of backend.tf
+terraform init -backend-config=backend-dev.hcl
+
+
+
+
+
+
+
+
+Lifecycle Rule
+
+1. create_before_destroy = create new one resouece after modification and then delete/terminate previous resouces. Ex. Prevent the downtime of apps.
+
+2. prevent_destroy = we can’t delete any resource. Ex. Prevent from eccidently delete
+
+Use LifCycle
+
+resouces “aws_instance” “app_server” {
+	ami = “”
+	instance_type = “”
+
+	lifecycle = {
+		create_before_destroy = true
+	}
+	
+	tags = {
+		Name = “”
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Terraform Provisioners
+Allow us to execute something on locally and remotely.
+Ex. deployed instance, and want to execute script after deployed.
+
+Provisoners has to be within that resources block only, not outside of resource block.
+
+1. local-exec
+Execute a command on the machine where terraform is running.
+Ex. when terraform apply, Public_IP of that server should be fetch into inventory.ini
+
+2. Remote-exec
+Execute a command on th remotely machine.
+Ex. You want to push  file on instance and run script on instance.
+
+1. local-exec
+Resources “aws_instance” “web” {
+	ami = “ami”
+	instance_type = “”
+
+	tags = {
+ 		Name = “”
+	}
+
+	provisioner “local-exec” {
+		command = <<<EOT	# End of Transmission from remotely tolocally.
+		echo “${self.public_ip} ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa” >> ./inventory.ini
+		EOT
+	}
+}
+
+# self.public_ip – self = Represent current resouce.
+# EOT – to send msg , command to local-exec to execute that sended msg, command.
+# EOT – End of Transmission.
+
+		
+
+
+
+
+
+
+
+
+2. remote-exec
+resouces “aws_instances” “web” {
+	ami = “ami
+	instance_type = “”
+
+# Assingn private ssh pem file to instance
+	key_file = “bhavin”
+
+# To connect to instance via ssh connections.
+	connection {
+		type = “ssh”
+		user = “ubuntu”
+		private_key = file(“~/.ssh/id_rsa”)
+		host = self.public_ip
+	}
+
+# write command to execute after instance launched.
+	provisioner “remote-exec” {
+		inline = [
+			“sudo apt update -y”.
+			“sudo apt install -y nginx”,
+			“sudo systemctl start nginx”,
+			“sudo systemctl enable nginx”
+		]
+	}
+}
+

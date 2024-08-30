@@ -1,0 +1,1445 @@
+**Day 30**
+
+### **Terraform Workspace**
+
+### **Step 1: Set Up AWS CLI Profiles**
+
+First, configure your AWS CLI with different profiles for each environment. Each profile should have access to a different AWS account or environment.
+
+`aws configure --profile dev`  
+`aws configure --profile staging`  
+`aws configure --profile prod`
+
+When you run these commands, you'll be prompted to enter your AWS Access Key ID, Secret Access Key, and default region for each profile. These profiles are stored in the `~/.aws/credentials` and `~/.aws/config` files.
+
+### **Step 2: Create a Terraform Configuration**
+
+Create a Terraform configuration that defines the resources you want to manage in AWS. For this example, we'll define a simple VPC.
+
+**`main.tf`**:
+
+`# Use the AWS provider`  
+`provider "aws" {`  
+  `region  = "us-west-2"`  
+  `profile = var.aws_profile`  
+`}`
+
+`# Define a VPC resource`  
+`resource "aws_vpc" "main" {`  
+  `cidr_block = "10.0.0.0/16"`
+
+  `tags = {`  
+    `Name = "${terraform.workspace}-vpc"`  
+  `}`  
+`}`
+
+**`variables.tf`**:
+
+`# Define a variable for the AWS profile`  
+`variable "aws_profile" {`  
+  `type        = string`  
+  `description = "The AWS CLI profile to use for this workspace"`  
+`}`
+
+**`outputs.tf`**:
+
+`# Output the VPC ID`  
+`output "vpc_id" {`  
+  `value = aws_vpc.main.id`  
+`}`
+
+### **Step 3: Initialize Terraform**
+
+Before working with Terraform, you need to initialize your working directory, which will set up the necessary backend and providers.
+
+`terraform init`
+
+### **Step 4: Create and Switch Between Workspaces**
+
+Now, create and switch to different workspaces for each environment (development, staging, and production).
+
+`terraform workspace new development`  
+`terraform workspace new staging`  
+`terraform workspace new production`
+
+You can list all available workspaces using:
+
+`terraform workspace list`
+
+### **Step 5: Apply Terraform Configurations to Each Workspace**
+
+For each workspace, you'll apply the Terraform configuration using the appropriate AWS profile.
+
+#### **Development Environment**
+
+**Switch to the Development Workspace**:
+
+`terraform workspace select development`
+
+**Apply Configuration**:
+
+`terraform apply -var="aws_profile=dev"`
+
+This command will create resources in the `development` AWS account using the `dev` profile.
+
+#### **Staging Environment**
+
+**Switch to the Staging Workspace**:
+
+`terraform workspace select staging`
+
+**Apply Configuration**:
+
+`terraform apply -var="aws_profile=staging"`
+
+This command will create resources in the `staging` AWS account using the `staging` profile.
+
+#### **Production Environment**
+
+**Switch to the Production Workspace**:
+
+`terraform workspace select production`
+
+**Apply Configuration**:
+
+`terraform apply -var="aws_profile=prod"`
+
+This command will create resources in the `production` AWS account using the `prod` profile.
+
+### **Step 6: Verify the Created Resources**
+
+After running the `terraform apply` command for each workspace, you can verify the created resources in the AWS Management Console under the respective accounts.
+
+### **Step 7: Managing State Files**
+
+Terraform will store the state files for each workspace separately. When using a remote backend like S3, the state files will be isolated by workspace name, preventing conflicts between environments.
+
+For example, in an S3 backend, the state files might be stored as:
+
+* `my-terraform-state-bucket/global/s3/env:development/terraform.tfstate`  
+* `my-terraform-state-bucket/global/s3/env:staging/terraform.tfstate`
+
+**Command History for AWS CLI Profile**
+
+   *15  aws configure*  
+   *16  cat .aws/config*  
+   *17  cat .aws/credentials4*  
+   *18  cat .aws/credentials*  
+   *19  clear*  
+   *20  aws configure*  
+   *21  aws configure \--profile dev*  
+   *22  cat .aws/config*  
+   *23  aws configure \--profile prod*  
+   *24  aws configure \--profile staging*  
+   *25  cat .aws/config*  
+   *26  cat .aws/credentials*  
+   *27  history*
+
+### **Using Different Folders for Different Terraform Workspaces**
+
+You want to deploy an AWS VPC with different configurations for development, staging, and production environments. Each environment will have its own folder with Terraform files specific to that environment.
+
+### **Step 1: Create the Directory Structure**
+
+First, create a directory structure to organize your Terraform files by workspace (environment):
+
+`mkdir -p terraform-project/{development,staging,production}`
+
+Your directory structure will look like this:
+
+`terraform-project/`  
+`├── development/`  
+`├── staging/`  
+`└── production/`
+
+### **Step 2: Create Terraform Files for Each Environment**
+
+Next, create the Terraform files for each environment. We'll start with the `development` environment and then replicate the setup for `staging` and `production`.
+
+#### **`development/main.tf`**
+
+In the `development` folder, create a `main.tf` file:
+
+`provider "aws" {`  
+  `region  = "us-west-2"`  
+  `profile = "dev"`  
+`}`
+
+`resource "aws_vpc" "main" {`  
+  `cidr_block = "10.0.0.0/16"`
+
+  `tags = {`  
+    `Name = "Development-VPC"`  
+  `}`  
+`}`
+
+#### **`staging/main.tf`**
+
+In the `staging` folder, create a `main.tf` file:
+
+`provider "aws" {`  
+  `region  = "us-west-2"`  
+  `profile = "staging"`  
+`}`
+
+`resource "aws_vpc" "main" {`  
+  `cidr_block = "10.1.0.0/16"`
+
+  `tags = {`  
+    `Name = "Staging-VPC"`  
+  `}`  
+`}`
+
+#### **`production/main.tf`**
+
+In the `production` folder, create a `main.tf` file:
+
+`provider "aws" {`  
+  `region  = "us-west-2"`  
+  `profile = "prod"`  
+`}`
+
+`resource "aws_vpc" "main" {`  
+  `cidr_block = "10.2.0.0/16"`
+
+  `tags = {`  
+    `Name = "Production-VPC"`  
+  `}`  
+`}`
+
+### **Step 3: Initialize and Apply Terraform in Each Workspace**
+
+Navigate to each environment folder, initialize Terraform, and apply the configuration.
+
+#### **Development Environment**
+
+**Navigate to the Development Folder**:
+
+`cd terraform-project/development`
+
+**Initialize Terraform**:
+
+`terraform init`
+
+**Create a New Workspace (Optional)**:  
+If you want to separate state files by environment using Terraform workspaces, you can create a new workspace:
+
+`terraform workspace new development`
+
+**Apply the Configuration**:
+
+`terraform apply`
+
+1. Terraform will deploy the VPC using the `dev` AWS profile.
+
+#### **Staging Environment**
+
+**Navigate to the Staging Folder**:
+
+`cd terraform-project/staging`
+
+**Initialize Terraform**:  
+`terraform init`
+
+**Create a New Workspace**:
+
+`terraform workspace new staging`
+
+**Apply the Configuration**:
+
+`terraform apply`
+
+1. Terraform will deploy the VPC using the `staging` AWS profile.
+
+#### **Production Environment**
+
+**Navigate to the Production Folder**:
+
+`cd terraform-project/production`
+
+**Initialize Terraform**:
+
+`terraform init`
+
+**Create a New Workspace**:
+
+`terraform workspace new production`
+
+**Apply the Configuration**:
+
+`terraform apply`
+
+1. Terraform will deploy the VPC using the `prod` AWS profile.
+
+### **`create_before_destroy` and `prevent_destroy` in Terraform**
+
+Terraform provides specific lifecycle rules to manage the order and safety of resource changes during an infrastructure update. Two important lifecycle rules are `create_before_destroy` and `prevent_destroy`.
+
+#### **1\. `create_before_destroy`**
+
+* **Purpose**: Ensures that when Terraform needs to replace a resource (e.g., due to a change in an immutable property), it creates the new resource before destroying the old one.  
+* **Impact**: This helps prevent downtime by ensuring the new resource is ready before the old one is terminated. However, it might lead to increased costs temporarily because both resources exist simultaneously.
+
+#### **2\. `prevent_destroy`**
+
+* **Purpose**: Protects a resource from being accidentally destroyed by Terraform. If Terraform tries to destroy a resource with this rule enabled, it will throw an error.  
+* **Impact**: This is crucial for protecting critical resources (e.g., production databases, DNS records) that should never be deleted unless explicitly allowed.
+
+### **Why Should All Changes Be Done Using Terraform Code?**
+
+* **Consistency**: Terraform manages infrastructure as code, ensuring that all changes are documented, versioned, and repeatable.  
+* **State Management**: Terraform keeps track of the current state of the infrastructure. Manual changes can cause discrepancies between the actual infrastructure and Terraform's state, leading to errors or unintended consequences.  
+* **Automation**: Terraform allows you to automate the provisioning and management of infrastructure. Manual changes break this automation, making it difficult to track what has changed and potentially leading to configuration drift.
+
+### **What Happens If Changes Are Made Manually and Then Terraform Apply is Run?**
+
+* **Terraform Drift Detection**: Terraform compares the real-world infrastructure against its state file. If there are differences (drift), Terraform will either revert the manual changes to match the code or throw errors if it cannot reconcile the differences.  
+* **Potential Issues**:  
+  * **Unintended Reversions**: Terraform might undo manual changes, leading to unexpected outcomes.  
+  * **Errors in Apply**: Terraform might fail to apply changes if it detects a conflict between the manually altered infrastructure and the code.  
+  * **State File Inconsistency**: Manual changes can make Terraform's state file inaccurate, leading to future issues during resource updates.
+
+### **Example: Using `create_before_destroy` and `prevent_destroy`**
+
+#### **Scenario**
+
+Imagine you have a production application that runs on an AWS EC2 instance. You want to ensure that during an update, the new instance is launched before the old one is terminated to avoid downtime. Additionally, you want to protect the production database from being accidentally destroyed.
+
+#### **Step 1: Terraform Configuration with `create_before_destroy` and `prevent_destroy`**
+
+**`main.tf`**:
+
+`provider "aws" {`  
+  `region = "us-west-2"`  
+`}`
+
+`# VPC (no lifecycle rules needed)`  
+`resource "aws_vpc" "main" {`  
+  `cidr_block = "10.0.0.0/16"`  
+`}`
+
+`# EC2 Instance with create_before_destroy`  
+`resource "aws_instance" "app_server" {`  
+  `ami           = "ami-0c55b159cbfafe1f0"  # Example AMI ID`  
+  `instance_type = "t2.medium"`  
+  `key_name      = "my-key"`
+
+  `lifecycle {`  
+    `create_before_destroy = true`  
+  `}`
+
+  `tags = {`  
+    `Name = "AppServer-${terraform.workspace}"`  
+  `}`  
+`}`
+
+`# RDS Instance with prevent_destroy`  
+`resource "aws_db_instance" "production_db" {`  
+  `allocated_storage    = 20`  
+  `engine               = "mysql"`  
+  `instance_class       = "db.t2.micro"`  
+  `name                 = "mydb"`  
+  `username             = "admin"`  
+  `password             = "password"`  
+  `skip_final_snapshot  = true`
+
+  `lifecycle {`  
+    `prevent_destroy = true`  
+  `}`
+
+  `tags = {`  
+    `Name = "ProductionDB"`  
+  `}`  
+`}`
+
+#### **Step 2: Initialize and Apply Terraform**
+
+Initialize Terraform and apply the configuration:
+
+`terraform init`  
+`terraform apply`
+
+Terraform will create the VPC, the EC2 instance, and the RDS database.
+
+#### **Step 3: Modify and Apply Terraform with Lifecycle Rules**
+
+Let's say you need to change the AMI of the EC2 instance. Terraform will create a new instance before destroying the old one:
+
+**Update the AMI ID** in `main.tf`:
+
+`ami = "ami-0abcdef1234567890"  # New AMI ID`
+
+1. 
+
+**Apply the Changes**:
+
+`terraform apply`
+
+2. **Outcome**: Terraform will launch a new EC2 instance with the new AMI. Once the new instance is healthy, Terraform will destroy the old instance. This avoids downtime.
+
+#### **Step 4: Attempt to Destroy the RDS Instance**
+
+To test the `prevent_destroy` rule, try to destroy the RDS instance:
+
+`terraform destroy`
+
+**Outcome**: Terraform will throw an error if it tries to destroy the RDS instance, protecting the production database from accidental deletion.
+
+`Error: Instance cannot be destroyed`
+
+#### **Step 5: Manually Changing the EC2 Instance and Running Terraform**
+
+If you manually terminate the EC2 instance via the AWS Console and then run `terraform apply`, Terraform will detect that the instance no longer exists and will recreate it according to the configuration in the `main.tf` file. This ensures consistency between the infrastructure and the Terraform code.
+
+`terraform apply`
+
+**Outcome**: Terraform detects the missing EC2 instance and recreates it using the configuration, ensuring that your infrastructure matches the defined state.
+
+### **Terraform Provisioners: Local-Exec and Remote-Exec**
+
+Terraform provisioners allow you to execute scripts or commands on a local machine or on remote machines after resources are created or destroyed. The two primary provisioners are:
+
+* **Local-Exec Provisioner**: Executes a command on the machine where Terraform is running.  
+* **Remote-Exec Provisioner**: Executes a command on a remote resource (like an EC2 instance) after it's created.
+
+### **1\. Local-Exec Provisioner**
+
+The `local-exec` provisioner runs commands on the machine where Terraform is executed. This is useful for tasks like updating a local inventory file or triggering configuration management tools like Ansible.
+
+#### **Use Case: Add an EC2 Instance IP to an Inventory File**
+
+Imagine you have an EC2 instance created by Terraform, and you need to add its IP address to an Ansible inventory file.
+
+##### **Example:**
+
+`resource "aws_instance" "web" {`  
+  `ami           = "ami-0c55b159cbfafe1f0"  # Example AMI ID`  
+  `instance_type = "t2.micro"`
+
+  `tags = {`  
+    `Name = "WebServer"`  
+  `}`
+
+  `provisioner "local-exec" {`  
+    `command = <<EOT`  
+    `echo "${self.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/id_rsa" >> ./inventory`  
+    `EOT`  
+  `}`  
+`}`
+
+##### **Explanation:**
+
+* The `local-exec` provisioner runs after the EC2 instance is created.  
+* The command appends the instance's public IP to an `inventory` file, which Ansible can use.
+
+### **2\. Remote-Exec Provisioner**
+
+The `remote-exec` provisioner runs commands on the resource (like an EC2 instance) after it's created. It requires a connection configuration, typically SSH.
+
+#### **Use Case: Installing a Basic Service on an EC2 Instance**
+
+Suppose you want to install and start Nginx on an EC2 instance after it's created.
+
+##### **Example:**
+
+`resource "aws_instance" "web" {`  
+  `ami           = "ami-0c55b159cbfafe1f0"  # Example AMI ID`  
+  `instance_type = "t2.micro"`
+
+  `connection {`  
+    `type        = "ssh"`  
+    `user        = "ec2-user"`  
+    `private_key = file("~/.ssh/id_rsa")`  
+    `host        = self.public_ip`  
+  `}`
+
+  `provisioner "remote-exec" {`  
+    `inline = [`  
+      `"sudo yum update -y",`  
+      `"sudo yum install -y nginx",`  
+      `"sudo systemctl start nginx",`  
+      `"sudo systemctl enable nginx"`  
+    `]`  
+  `}`  
+`}`
+
+##### **Explanation:**
+
+* The `remote-exec` provisioner connects to the EC2 instance via SSH.  
+* It runs a series of commands to update the system, install Nginx, and start the service.
+
+### **3\. Running a Custom Shell Script After Creating an EC2 Instance**
+
+Sometimes, you may want to run a custom shell script after an EC2 instance is created. This can be achieved using the `remote-exec` provisioner.
+
+##### **Example:**
+
+Let's say you have a shell script called `setup.sh` that configures your instance.
+
+**`setup.sh`:**
+
+`#!/bin/bash`  
+`sudo yum update -y`  
+`sudo yum install -y httpd`  
+`sudo systemctl start httpd`  
+`sudo systemctl enable httpd`  
+`echo "Welcome to my website!" > /var/www/html/index.html`
+
+**Terraform Configuration:**
+
+`resource "aws_instance" "web" {`  
+  `ami           = "ami-0c55b159cbfafe1f0"  # Example AMI ID`  
+  `instance_type = "t2.micro"`
+
+  `connection {`  
+    `type        = "ssh"`  
+    `user        = "ec2-user"`  
+    `private_key = file("~/.ssh/id_rsa")`  
+    `host        = self.public_ip`  
+  `}`
+
+  `provisioner "remote-exec" {`  
+    `script = "setup.sh"`  
+  `}`  
+`}`
+
+##### **Explanation:**
+
+* The `remote-exec` provisioner runs the `setup.sh` script on the EC2 instance after it's created.  
+* This script performs updates, installs Apache, and sets up a basic web page.
+
+### **Setting Up HashiCorp Vault and Managing Secrets**
+
+In this example, we’ll cover how to set up HashiCorp Vault, manage IAM user credentials, and securely handle sensitive data like RDS passwords. We’ll use Vault to store and retrieve these secrets while ensuring sensitive data isn’t exposed in the output.
+
+#### **Overview**
+
+1. **Install and Configure Vault**: Set up HashiCorp Vault and initialize it.  
+2. **Store IAM Credentials**: Use Vault to manage AWS IAM user credentials.  
+3. **Retrieve Secrets Securely**: Fetch and use secrets in a way that avoids exposing sensitive data.  
+4. **Store and Retrieve RDS Password**: Manage an RDS password securely using Vault.
+
+### **Step 1: Install and Configure Vault**
+
+#### **Install Vault**
+
+You can install Vault on your local machine or a server. Here’s a quick installation guide for a Linux system:
+
+`# Download Vault`  
+`curl -O https://releases.hashicorp.com/vault/1.12.2/vault_1.12.2_linux_amd64.zip`
+
+`# Unzip and move to /usr/local/bin`  
+`unzip vault_1.12.2_linux_amd64.zip`  
+`sudo mv vault /usr/local/bin/`
+
+`# Verify the installation`  
+`vault --version`
+
+#### **Start Vault in Development Mode**
+
+For initial testing and learning, start Vault in development mode:
+
+`vault server -dev`
+
+This will start Vault and provide a root token. Note the address (`http://127.0.0.1:8200`) and the root token, which you’ll use for authentication.
+
+#### **Set Up the Vault CLI**
+
+Set the `VAULT_ADDR` environment variable and authenticate:
+
+`export VAULT_ADDR='http://127.0.0.1:8200'`  
+`vault login <root-token>`
+
+### **Step 2: Store IAM Credentials**
+
+#### **Enable the AWS Secrets Engine**
+
+Enable the AWS secrets engine to manage AWS credentials:
+
+`vault secrets enable -path=aws aws`
+
+#### **Configure the AWS Secrets Engine**
+
+Configure Vault with your AWS credentials. This allows Vault to generate IAM credentials:
+
+`vault write aws/config/root \`  
+    `access_key="your-access-key-id" \`  
+    `secret_key="your-secret-access-key" \`  
+    `region="us-west-2"`
+
+#### **Create an IAM Role**
+
+Define a role that Vault will use to generate temporary IAM credentials:
+
+`vault write aws/roles/my-role \`  
+    `credential_type=iam_user \`  
+    `policy_arns=arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess`
+
+#### **Retrieve IAM Credentials**
+
+Generate IAM credentials using the role defined:
+
+`vault read aws/creds/my-role`
+
+### **Step 3: Avoid Printing Sensitive Data**
+
+#### **Prevent Sensitive Data Exposure**
+
+To avoid exposing sensitive data in Terraform outputs or scripts, use Vault's secure methods to fetch secrets without directly displaying them.
+
+**Example with Terraform**
+
+If you are using Terraform to manage resources and secrets, make sure to avoid outputting sensitive values:
+
+**`main.tf`**
+
+`provider "aws" {`  
+  `region = "us-west-2"`  
+`}`
+
+`data "vault_generic_secret" "aws_creds" {`  
+  `path = "aws/creds/my-role"`  
+`}`
+
+`resource "aws_instance" "web" {`  
+  `ami           = "ami-0c55b159cbfafe1f0"`  
+  `instance_type = "t2.micro"`  
+    
+  `connection {`  
+    `type        = "ssh"`  
+    `user        = "ec2-user"`  
+    `private_key = file("~/.ssh/id_rsa")`  
+    `host        = self.public_ip`  
+  `}`
+
+  `provisioner "remote-exec" {`  
+    `inline = [`  
+      `"sudo yum update -y",`  
+      `"sudo yum install -y nginx",`  
+      `"sudo systemctl start nginx",`  
+      `"sudo systemctl enable nginx"`  
+    `]`  
+  `}`  
+    
+  `tags = {`  
+    `Name = "AppServer-${terraform.workspace}"`  
+  `}`  
+`}`
+
+In the `terraform.tfstate` file, sensitive data is stored securely. However, ensure that sensitive data is not included in `output` blocks in Terraform.
+
+**Example Output**
+
+`output "instance_ip" {`  
+  `value = aws_instance.web.public_ip`  
+`}`
+
+**Avoid including sensitive data in outputs:**
+
+`output "aws_access_key_id" {`  
+  `value     = data.vault_generic_secret.aws_creds.data["access_key"]`  
+  `sensitive = true`  
+`}`
+
+`output "aws_secret_access_key" {`  
+  `value     = data.vault_generic_secret.aws_creds.data["secret_key"]`  
+  `sensitive = true`  
+`}`
+
+### **Step 4: Store and Retrieve RDS Password**
+
+#### **Store RDS Password**
+
+Store an RDS password securely in Vault:
+
+`vault kv put secret/rds password="supersecretpassword"`
+
+#### **Retrieve RDS Password**
+
+To retrieve the RDS password:
+
+`vault kv get -field=password secret/rds`
+
+### **Credentials**
+
+**AWS\_ACCESS\_KEY\_ID \=** "Enter Value"  
+**AWS\_SECRET\_KEY\_ACCESS \=** "Enter Value"
+
+**Staging Profile**   
+AWS_ACCESS_KEY_ID="Enter Value"  
+AWS_SECRET_KEY_ACCESS="Enter Value"
+
+**Production Profile**   
+AWS_ACCESS_KEY_ID="Enter Value"  
+AWS_SECRET_KEY_ACCESS="Enter Value"
+
+### **Project: Advanced Terraform with Provisioners, Modules, and Workspaces**
+
+#### **Project Objective:**
+
+This project is designed to evaluate participants' understanding of Terraform provisioners, modules, and workspaces. The project involves deploying a basic infrastructure on AWS using Terraform modules, executing remote commands on the provisioned resources using provisioners, and managing multiple environments using Terraform workspaces. All resources should be within the AWS Free Tier limits.
+
+#### **Project Overview:**
+
+Participants will create a Terraform configuration that deploys an EC2 instance and an S3 bucket using a custom Terraform module. The project will also require the use of Terraform provisioners to execute scripts on the EC2 instance. Finally, participants will manage separate environments (e.g., dev and prod) using Terraform workspaces.
+
+#### **Specifications:**
+
+1. **Terraform Modules**:  
+   * Create a reusable module to deploy an EC2 instance and an S3 bucket.  
+   * The EC2 instance should be of type `t2.micro`, and the S3 bucket should be configured for standard storage.  
+   * The module should accept input variables for the instance type, AMI ID, key pair name, and bucket name.  
+   * Outputs should include the EC2 instance’s public IP and S3 bucket’s ARN.  
+2. **Terraform Provisioners**:  
+   * Use `remote-exec` and `local-exec` provisioners to perform post-deployment actions on the EC2 instance.  
+   * The `remote-exec` provisioner should be used to connect to the EC2 instance via SSH and run a script that installs Apache HTTP Server.  
+   * The `local-exec` provisioner should be used to output a message on the local machine indicating the deployment status, such as "EC2 instance successfully provisioned with Apache."  
+3. **Terraform Workspaces**:  
+   * Implement Terraform workspaces to manage separate environments (e.g., `dev` and `prod`).  
+   * Each workspace should deploy the same infrastructure (EC2 and S3) but with different configurations (e.g., different tags or bucket names).  
+   * Ensure that the state for each workspace is managed separately to prevent conflicts between environments.
+
+#### **Key Tasks:**
+
+1. **Module Development**:  
+   * **Module Setup**: Create a directory for the module (e.g., `modules/aws_infrastructure`).  
+   * **Resource Definitions**: Define the resources for an EC2 instance and an S3 bucket within the module.  
+   * **Variable Inputs**: Define input variables for instance type, AMI ID, key pair name, and S3 bucket name.  
+   * **Outputs**: Define outputs for the EC2 instance's public IP and the S3 bucket's ARN.  
+2. **Main Terraform Configuration**:  
+   * **Main Config Setup**: In the root directory, create a Terraform configuration that calls the custom module.  
+   * **Backend Configuration**: Configure Terraform to use local state storage for simplicity (optional for Free Tier compliance).  
+3. **Provisioner Implementation**:  
+   * **Remote Execution**: Use the `remote-exec` provisioner to SSH into the EC2 instance and execute a script that installs Apache.  
+   * **Local Execution**: Use the `local-exec` provisioner to print a confirmation message on the local machine after successful deployment.  
+4. **Workspace Management**:  
+   * **Workspace Creation**: Create Terraform workspaces for `dev` and `prod`.  
+   * **Environment-Specific Configurations**: Customize the EC2 instance tags and S3 bucket names for each workspace to differentiate between environments.  
+   * **Workspace Deployment**: Deploy the infrastructure separately in the `dev` and `prod` workspaces.  
+5. **Validation and Testing**:  
+   * **Apache Installation Verification**: After the deployment, verify that Apache is installed and running on the EC2 instance by accessing the public IP address in a web browser.  
+   * **Workspace Separation**: Confirm that each workspace has its own isolated infrastructure and state files.  
+   * **Provisioner Logs**: Review the output from the `local-exec` provisioner to ensure it indicates successful deployment.  
+6. **Resource Cleanup**:  
+   * **Destroy Resources**: Use `terraform destroy` to remove the resources in both workspaces.  
+   * **Workspace Management**: Confirm that the resources are destroyed separately in each workspace and that the state files are updated accordingly.  
+7. **Documentation**:  
+   * **Module Documentation**: Provide detailed documentation of the Terraform module, including variable definitions, provisioners, and outputs.  
+   * **Workspace Documentation**: Document the process for creating and managing Terraform workspaces.  
+   * **Provisioner Documentation**: Include descriptions of the provisioners used and their purpose.
+
+#### **Deliverables:**
+
+* **Terraform Module**: The reusable module files in the `modules/aws_infrastructure` directory.  
+* **Main Terraform Configuration**: The root Terraform configuration files.  
+* **Provisioner Scripts**: Any scripts used by the `remote-exec` provisioner for post-deployment configuration.  
+* **Workspace Documentation**: Documentation explaining the use of Terraform workspaces.  
+* **Validation Screenshots/Logs**: Screenshots or logs showing the successful execution of provisioners and Apache running on the EC2 instance.  
+* **Cleanup Confirmation**: Evidence that resources have been successfully destroyed in all workspaces.
+
+#### **Estimated Time:**
+
+This project is designed to be completed in **2 hours**.
+
+**Solution**
+
+### **1\. Project Structure**
+
+We'll set up the following directory structure:
+
+`terraform-project/`  
+`│`  
+`├── main.tf`  
+`├── variables.tf`  
+`├── outputs.tf`  
+`├── modules/`  
+`│   └── aws_infrastructure/`  
+`│       ├── main.tf`  
+`│       ├── variables.tf`  
+`│       ├── outputs.tf`  
+`│       └── scripts/`  
+`│           └── install_apache.sh`
+
+### **2\. Module Development**
+
+#### **Step 1: Create the Module Directory**
+
+Create the directory structure for the module:
+
+`mkdir -p terraform-project/modules/aws_infrastructure/scripts`  
+`cd terraform-project/modules/aws_infrastructure`
+
+#### **Step 2: Define the Resources in `main.tf`**
+
+Inside `terraform-project/modules/aws_infrastructure/main.tf`, define the resources for an EC2 instance and an S3 bucket:
+
+`provider "aws" {`  
+  `region = var.region`  
+`}`
+
+`resource "aws_instance" "web_server" {`  
+  `ami           = var.ami_id`  
+  `instance_type = var.instance_type`  
+  `key_name      = var.key_name`
+
+  `tags = {`  
+    `Name = "WebServer-${var.environment}"`  
+  `}`
+
+  `provisioner "remote-exec" {`  
+    `inline = [`  
+      `"sudo apt-get update",`  
+      `"sudo apt-get install -y apache2"`  
+    `]`
+
+    `connection {`  
+      `type        = "ssh"`  
+      `user        = "ubuntu"`  
+      `private_key = file(var.private_key_path)`  
+      `host        = self.public_ip`  
+    `}`  
+  `}`
+
+  `provisioner "local-exec" {`  
+    `command = "echo EC2 instance ${self.public_ip} has been provisioned."`  
+  `}`  
+`}`
+
+`resource "aws_s3_bucket" "static_site" {`  
+  `bucket = var.bucket_name`
+
+  `tags = {`  
+    `Name = "StaticSite-${var.environment}"`  
+  `}`  
+`}`
+
+#### **Step 3: Define the Module Variables in `variables.tf`**
+
+Create the `variables.tf` file to define the module's input variables
+
+`variable "ami_id" {`  
+  `description = "AMI ID for the EC2 instance"`  
+  `type        = string`  
+`}`
+
+`variable "instance_type" {`  
+  `description = "Instance type for the EC2 instance"`  
+  `type        = string`  
+  `default     = "t2.micro"`  
+`}`
+
+`variable "key_name" {`  
+  `description = "Key pair name for the EC2 instance"`  
+  `type        = string`  
+`}`
+
+`variable "bucket_name" {`  
+  `description = "Name for the S3 bucket"`  
+  `type        = string`  
+`}`
+
+`variable "region" {`  
+  `description = "AWS region"`  
+  `type        = string`  
+`}`
+
+`variable "private_key_path" {`  
+  `description = "Path to the private key for SSH"`  
+  `type        = string`  
+`}`
+
+`variable "environment" {`  
+  `description = "Environment (dev or prod)"`  
+  `type        = string`  
+`}`
+
+#### **Step 4: Define the Module Outputs in `outputs.tf`**
+
+Create the `outputs.tf` file to define the module's outputs:
+
+`output "ec2_public_ip" {`  
+  `description = "Public IP of the EC2 instance"`  
+  `value       = aws_instance.web_server.public_ip`  
+`}`
+
+`output "s3_bucket_arn" {`  
+  `description = "ARN of the S3 bucket"`  
+  `value       = aws_s3_bucket.static_site.arn`  
+`}`
+
+#### **Step 5: Create the Script for the `remote-exec` Provisioner**
+
+Create the `install_apache.sh` script in the `scripts` directory:
+
+`#!/bin/bash`  
+`sudo apt-get update`  
+`sudo apt-get install -y apache2`
+
+Make sure the script is executable:
+
+`chmod +x terraform-project/modules/aws_infrastructure/scripts/install_apache.sh`
+
+### **3\. Main Terraform Configuration**
+
+#### **Step 1: Create the Main Configuration File (`main.tf`)**
+
+In the root directory `terraform-project/`, create the `main.tf` file:
+
+`provider "aws" {`  
+  `region = var.region`  
+`}`
+
+`module "aws_infrastructure" {`  
+  `source = "./modules/aws_infrastructure"`
+
+  `ami_id          = var.ami_id`  
+  `instance_type   = var.instance_type`  
+  `key_name        = var.key_name`  
+  `bucket_name     = var.bucket_name`  
+  `region          = var.region`  
+  `private_key_path = var.private_key_path`  
+  `environment     = terraform.workspace`  
+`}`
+
+#### **Step 2: Define Variables in `variables.tf`**
+
+Create a `variables.tf` file in the root directory:
+
+`variable "ami_id" {`  
+  `description = "AMI ID for the EC2 instance"`  
+  `type        = string`  
+  `default     = "ami-0c55b159cbfafe1f0"  # Example AMI ID, replace as needed`  
+`}`
+
+`variable "instance_type" {`  
+  `description = "Instance type for the EC2 instance"`  
+  `type        = string`  
+  `default     = "t2.micro"`  
+`}`
+
+`variable "key_name" {`  
+  `description = "Key pair name for the EC2 instance"`  
+  `type        = string`  
+  `default     = "my-key-pair"  # Replace with your key pair name`  
+`}`
+
+`variable "bucket_name" {`  
+  `description = "Name for the S3 bucket"`  
+  `type        = string`  
+  `default     = "my-static-site-bucket"  # Replace with your bucket name`  
+`}`
+
+`variable "region" {`  
+  `description = "AWS region"`  
+  `type        = string`  
+  `default     = "us-east-1"`  
+`}`
+
+`variable "private_key_path" {`  
+  `description = "Path to the private key for SSH"`  
+  `type        = string`  
+  `default     = "~/.ssh/id_rsa"  # Replace with your private key path`  
+`}`
+
+#### **Step 3: Define Outputs in `outputs.tf`**
+
+Create an `outputs.tf` file in the root directory:
+
+`output "ec2_public_ip" {`  
+  `description = "Public IP of the EC2 instance"`  
+  `value       = module.aws_infrastructure.ec2_public_ip`  
+`}`
+
+`output "s3_bucket_arn" {`  
+  `description = "ARN of the S3 bucket"`  
+  `value       = module.aws_infrastructure.s3_bucket_arn`  
+`}`
+
+### **4\. Terraform Workspace Management**
+
+#### **Step 1: Initialize Terraform**
+
+Run the following command to initialize Terraform:
+
+`terraform init`
+
+#### **Step 2: Create and Switch Workspaces**
+
+Create and switch to the `dev` workspace:
+
+`terraform workspace new dev`
+
+Deploy the infrastructure in the `dev` workspace:
+
+`terraform apply -auto-approve`
+
+Create and switch to the `prod` workspace:
+
+`terraform workspace new prod`
+
+Deploy the infrastructure in the `prod` workspace:
+
+`terraform apply -auto-approve`
+
+### **5\. Validation and Testing**
+
+#### **Step 1: Verify Apache Installation**
+
+After deployment, access the public IP of the EC2 instance in a web browser to confirm that Apache is installed and serving the default web page.
+
+#### **Step 2: Check Workspace Separation**
+
+Ensure that the resources in the `dev` and `prod` workspaces are isolated and have unique tags (e.g., different bucket names or EC2 instance names).
+
+#### **Step 3: Review Provisioner Logs**
+
+Check the Terraform output to ensure that the `local-exec` provisioner successfully printed the EC2 instance's public IP and confirmation message.
+
+### **6\. Resource Cleanup**
+
+#### **Step 1: Destroy Resources in Each Workspace**
+
+To clean up resources, destroy them in each workspace:
+
+`terraform workspace select dev`  
+`terraform destroy -auto-approve`
+
+`terraform workspace select prod`  
+`terraform destroy -auto-approve`
+
+#### **Step 2: Delete Workspaces**
+
+Finally, delete the workspaces:
+
+`terraform workspace select default`  
+`terraform workspace delete dev`  
+`terraform workspace delete prod`
+
+### **Setting Up HashiCorp Vault and Managing Secrets**
+
+In this example, we’ll cover how to set up HashiCorp Vault, manage IAM user credentials, and securely handle sensitive data like RDS passwords. We’ll use Vault to store and retrieve these secrets while ensuring sensitive data isn’t exposed in the output.
+
+#### **Overview**
+
+1. **Install and Configure Vault**: Set up HashiCorp Vault and initialize it.  
+2. **Store IAM Credentials**: Use Vault to manage AWS IAM user credentials.  
+3. **Retrieve Secrets Securely**: Fetch and use secrets in a way that avoids exposing sensitive data.  
+4. **Store and Retrieve RDS Password**: Manage an RDS password securely using Vault.
+
+### **Step 1: Install and Configure Vault**
+
+#### **Install Vault**
+
+You can install Vault on your local machine or a server. Here’s a quick installation guide for a Linux system:
+
+`# Download Vault`  
+`curl -O https://releases.hashicorp.com/vault/1.12.2/vault_1.12.2_linux_amd64.zip`
+
+`# Unzip and move to /usr/local/bin`  
+`unzip vault_1.12.2_linux_amd64.zip`  
+`sudo mv vault /usr/local/bin/`
+
+`# Verify the installation`  
+`vault --version`
+
+**`Latest Installation Package (August 23, 2024)`**
+
+[`Install | Vault | HashiCorp Developer`](https://developer.hashicorp.com/vault/install)
+
+`wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg`  
+`echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list`  
+`sudo apt update && sudo apt install vault`
+
+#### **Start Vault in Development Mode**
+
+For initial testing and learning, start Vault in development mode:
+
+`vault server -dev`  
+`(This command sets up the vault in the local machine, wherever it is installed)`
+
+This will start Vault and provide a root token. Note the address (`http://127.0.0.1:8200`) and the root token, which you’ll use for authentication.
+
+#### **Set Up the Vault CLI**
+
+Set the `VAULT_ADDR` environment variable and authenticate:
+
+`export VAULT_ADDR='http://127.0.0.1:8200'`  
+`vault login <root-token>`
+
+### **Step 2: Store IAM Credentials**
+
+#### **Enable the AWS Secrets Engine**
+
+Enable the AWS secrets engine to manage AWS credentials:
+
+`vault secrets enable -path=aws aws`
+
+#### **Configure the AWS Secrets Engine**
+
+Configure Vault with your AWS credentials. This allows Vault to generate IAM credentials:
+
+`vault write aws/config/root \`  
+    `access_key="your-access-key-id" \`  
+    `secret_key="your-secret-access-key" \`  
+    `region="us-west-2"`
+
+#### **Create an IAM Role**
+
+Define a role that Vault will use to generate temporary IAM credentials:
+
+`vault write aws/roles/my-role \`  
+    `credential_type=iam_user \`  
+    `policy_arns=arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess`
+
+#### **Retrieve IAM Credentials**
+
+Generate IAM credentials using the role defined:
+
+`vault read aws/creds/my-role`
+
+### **Step 3: Avoid Printing Sensitive Data**
+
+#### **Step 3: Store the RDS Password in Vault**
+
+**Enable the KV Secrets Engine**: Enable the Key-Value (KV) secrets engine to store secrets.
+
+`vault secrets enable -path=secret kv (kv refers to key-value pair)`
+
+**Store the RDS Password**: Store the RDS password in Vault.
+
+`vault kv put secret/rds password="secretpassword"`
+
+#### **Step 4: Set Up Terraform to Use Secrets from Vault**
+
+**Create the Terraform Configuration (`main.tf`)**:
+
+`terraform {`  
+  `required_providers {`  
+    `aws = {`  
+      `source  = "hashicorp/aws"`  
+      `version = "~> 3.0"`  
+    `}`  
+    `vault = {`  
+      `source  = "hashicorp/vault"`  
+      `version = "~> 3.0"`  
+    `}`  
+  `}`  
+`}`
+
+`provider "aws" {`  
+  `region = "us-west-2"`  
+`}`
+
+`provider "vault" {`  
+  `address = "http://127.0.0.1:8200"`  
+`}`
+
+`# Retrieve IAM credentials from Vault`  
+`data "vault_generic_secret" "aws_creds" {`  
+  `path = "aws/creds/my-role"`  
+`}`
+
+`# Retrieve RDS password from Vault`  
+`data "vault_generic_secret" "rds" {`  
+  `path = "secret/rds"`  
+`}`
+
+`# Create an RDS instance using the password from Vault`  
+`resource "aws_db_instance" "example" {`  
+  `allocated_storage    = 20`  
+  `engine               = "mysql"`  
+  `instance_class       = "db.t2.micro"`  
+  `name                 = "exampledb"`  
+  `username             = "admin"`  
+  `password             = data.vault_generic_secret.rds.data["password"]`  
+  `parameter_group_name = "default.mysql5.7"`  
+  `skip_final_snapshot  = true`  
+`}`
+
+`output "rds_endpoint" {`  
+  `value = aws_db_instance.example.endpoint`  
+`}`
+
+`output "rds_password" {`  
+  `value     = data.vault_generic_secret.rds.data["password"]`  
+  `sensitive = true`  
+`}`
+
+**Initialize Terraform**: Run `terraform init` to initialize the Terraform configuration.
+
+`terraform init`
+
+**Apply the Terraform Configuration**: Apply the Terraform configuration to create the RDS instance.
+
+`terraform apply`
+
+1.   
+   * Terraform will securely retrieve the IAM credentials and RDS password from Vault and use them to configure the AWS resources.
+
+#### **Step 5: Securely Handle Sensitive Data**
+
+* **Avoid Exposing Sensitive Data**: The `rds_password` output is marked as `sensitive`, so Terraform will not display it in the terminal. Ensure that sensitive information like access keys and passwords are always handled securely and not exposed in logs or outputs.  
+* **Example of Secure Output**: The sensitive data will be stored securely in the Terraform state file, and you should ensure that the state file is also stored securely (e.g., using encrypted S3 buckets if storing remotely).
+
+`output "instance_ip" {`  
+  `value = aws_instance.web.public_ip`  
+`}`
+
+`output "aws_access_key_id" {`  
+  `value     = data.vault_generic_secret.aws_creds.data["access_key"]`  
+  `sensitive = true`  
+`}`
+
+`output "aws_secret_access_key" {`  
+  `value     = data.vault_generic_secret.aws_creds.data["secret_key"]`  
+  `sensitive = true`  
+`}`
+
+#### **Step 6: Unsealing Vault (in a Real-World Setup)**
+
+* **Auto-Unseal**: In production, configure Vault to auto-unseal using a cloud KMS to eliminate the need for manual unsealing after every restart.
+
+  `vault operator unseal <auto-unseal-key>`
+
+### **Credentials**
+
+### **\[default\]**
+
+### **AWS\_ACCESS\_KEY\_ID \=** "Enter Value"
+
+**AWS\_SECRET\_ACCESS\_KEY \=** "Enter Value"
+
+### **\[development\]**
+
+### **AWS\_ACCESS\_KEY\_ID \=** "Enter Value"
+
+**AWS\_SECRET\_ACCESS\_KEY \=** "Enter Value"
+
+### **Automation (IaaC) Terraform on AWS Assessment Project**
+
+#### **Project Overview**
+
+This capstone project is designed to assess participants' knowledge and practical skills with Terraform, specifically focusing on AWS. The project will require deploying a complete infrastructure using Terraform, emphasizing the usage of state lock, variables, `.tfvars` files, modules, functions, workspaces, and lifecycle rules. The deployment will be restricted to AWS Free Tier resources to avoid unnecessary costs.
+
+#### **Project Objectives**
+
+●       Deploy a multi-tier architecture on AWS using Terraform.
+
+●       Implement state locking to manage concurrent changes.
+
+●       Use variables and `.tfvars` files to parameterize configurations.
+
+●       Create and use Terraform modules to promote reusability and organization.
+
+●       Utilize functions to dynamically configure resources.
+
+●       Manage multiple environments using Terraform workspaces.
+
+●       Implement lifecycle rules to control resource creation, updates, and deletion.
+
+### **Project Requirements**
+
+#### **1\. Infrastructure Design**
+
+The project will involve deploying a basic 3-tier web application architecture, which includes the following components:
+
+1. **VPC**: Create a Virtual Private Cloud (VPC) with public and private subnets across two availability zones.  
+2. **Security Groups**: Define security groups to control inbound and outbound traffic for the application and database tiers.  
+3. **EC2 Instances**: Deploy EC2 instances in the public subnets for the web servers (Application Tier).  
+4. **RDS Instance**: Deploy an RDS MySQL instance in the private subnet for the database (Database Tier).  
+5. **S3 Bucket**: Create an S3 bucket to store static files, with versioning enabled.  
+6. **Elastic IPs**: Assign Elastic IPs to the EC2 instances.  
+7. **IAM Role**: Create an IAM role with the necessary permissions and attach it to the EC2 instances.
+
+#### **2\. Terraform State Management**
+
+●       Implement **remote state storage** using an S3 bucket to store the Terraform state file.  
+●       Use **DynamoDB** for state locking to prevent concurrent modifications.
+
+#### **3\. Variables and tfvars**
+
+●       Define **input variables** for resources like VPC CIDR, instance types, database username/password, and S3 bucket names.  
+●       Use `.tfvars` files to pass different configurations for environments (e.g., `dev.tfvars`, `prod.tfvars`).
+
+#### **4\. Modules**
+
+●       Break down the infrastructure into reusable **modules**:
+
+○       **VPC Module**: Manage VPC, subnets, and routing tables.
+
+○       **EC2 Module**: Configure and launch EC2 instances.
+
+○       **RDS Module**: Set up the RDS MySQL database.
+
+○       **S3 Module**: Handle S3 bucket creation with versioning.
+
+○       **IAM Module**: Create and manage IAM roles and policies.
+
+#### **5\. Functions**
+
+●       Use Terraform **functions** to dynamically configure:
+
+○       The names of resources using `format` and `join` functions.
+
+○       Subnet CIDRs using `cidrsubnet`.
+
+○       Lookup values for AMI IDs using `lookup` function.
+
+#### **6\. Workspaces**
+
+●       Create **workspaces** for different environments (e.g., `development`, `staging`, `production`).  
+●       Deploy the infrastructure in each environment using the appropriate workspace.
+
+#### **7\. Lifecycle Rules**
+
+●       Implement **lifecycle rules** to:
+
+○       **Prevent resource deletion**: Ensure certain resources, like the RDS database, are not accidentally deleted (`prevent_destroy`).
+
+○       **Ignore changes** to specific resource attributes (e.g., S3 bucket tags) using `ignore_changes`.
+
+### **Project Steps**
+
+#### **Step 1: Setup Remote State and Locking**
+
+1. Create an S3 bucket for storing Terraform state.  
+2. Create a DynamoDB table for state locking.  
+3. Configure the backend in Terraform to use the S3 bucket and DynamoDB table.
+
+#### **Step 2: Develop and Organize Modules**
+
+1. Develop separate modules for VPC, EC2, RDS, S3, and IAM.  
+2. Place each module in a separate directory with `main.tf`, `variables.tf`, and `outputs.tf`.
+
+#### **Step 3: Define Variables and tfvars Files**
+
+1. Define variables in `variables.tf` files within each module.  
+2. Create a `terraform.tfvars` file with default values.  
+3. Create separate environment-specific `.tfvars` files (e.g., `dev.tfvars`, `prod.tfvars`).
+
+#### **Step 4: Implement Workspaces**
+
+1. Initialize Terraform and create workspaces (`development`, `staging`, `production`).  
+2. Deploy infrastructure in each workspace using the appropriate `.tfvars` file.
+
+#### **Step 5: Deploy the Infrastructure**
+
+1. Use the `terraform apply` command to deploy the infrastructure in each workspace.  
+2. Verify the deployment by accessing the EC2 instances and ensuring the application is running.
+
+#### **Step 6: Implement Lifecycle Rules**
+
+1. Modify the Terraform code to add lifecycle rules for critical resources.  
+2. Apply the changes and verify that the lifecycle rules are in effect.
+
+#### **Step 7: Cleanup**
+
+1. Destroy the infrastructure in each workspace using `terraform destroy`.  
+2. Ensure that resources marked with `prevent_destroy` are not deleted.
+
+### **Deliverables**
+
+●       Terraform configuration files (`main.tf`, `variables.tf`, `outputs.tf`, `*.tfvars`, and module files).
+
+●       A written report explaining the design, use of Terraform features (state locking, workspaces, modules, etc.), and challenges faced.
+
+●       Screenshots or logs demonstrating the deployment, state locking, use of workspaces, and lifecycle rules in action.
+
+aws ec2 describe-images \\  
+    \--owners 099720109477 \\  
+    \--filters "Name=name,Values=ubuntu/images/\*" \\  
+    \--query 'Images\[\*\].\[ImageId,Name,Description\]' \\  
+    \--output table
+
+##### **`rds_module/rds.tf` (with hardcoded values)**
+
+`resource "aws_db_instance" "this" {`  
+  `allocated_storage       = 20`  
+  `engine                  = "mysql"`  
+  `instance_class          = "db.t3.micro"`  
+  `name                    = "mydb"`  
+  `username                = "admin"`  
+  `password                = "mysecretpassword"`  
+  `parameter_group_name    = "default.mysql5.7"`  
+  `db_subnet_group_name    = "my-db-subnet-group"`  
+  `vpc_security_group_ids  = ["sg-0123456789abcdef0"]`  
+  `multi_az                = false`  
+  `storage_type            = "gp2"`  
+  `publicly_accessible     = false`  
+  `backup_retention_period = 7`  
+  `skip_final_snapshot     = true`  
+`}`
+
+##### **`main.tf` (Calling the Module)**
+
+`module "rds" {`  
+  `source = "./rds_module"`  
+`}`
+
+### **Approach 1: Using `count` or `for_each`**
+
+In this approach, you can set up conditions within the module to control which RDS instance is created based on input variables.
+
+#### **Example: Using `count`**
+
+##### **`rds_module/rds.tf`**
+
+`# RDS instance 1`  
+`resource "aws_db_instance" "db1" {`  
+  `count                   = var.create_db1 ? 1 : 0`  
+  `allocated_storage       = 20`  
+  `engine                  = "mysql"`  
+  `instance_class          = "db.t3.micro"`  
+  `name                    = "mydb1"`  
+  `username                = "admin1"`  
+  `password                = "mysecretpassword1"`  
+  `parameter_group_name    = "default.mysql5.7"`  
+  `db_subnet_group_name    = "my-db-subnet-group1"`  
+  `vpc_security_group_ids  = ["sg-0123456789abcdef0"]`  
+  `multi_az                = false`  
+  `storage_type            = "gp2"`  
+  `publicly_accessible     = false`  
+  `backup_retention_period = 7`  
+  `skip_final_snapshot     = true`  
+`}`
+
+`# RDS instance 2`  
+`resource "aws_db_instance" "db2" {`  
+  `count                   = var.create_db2 ? 1 : 0`  
+  `allocated_storage       = 30`  
+  `engine                  = "postgres"`  
+  `instance_class          = "db.t3.micro"`  
+  `name                    = "mydb2"`  
+  `username                = "admin2"`  
+  `password                = "mysecretpassword2"`  
+  `parameter_group_name    = "default.postgres9.6"`  
+  `db_subnet_group_name    = "my-db-subnet-group2"`  
+  `vpc_security_group_ids  = ["sg-0123456789abcdef1"]`  
+  `multi_az                = true`  
+  `storage_type            = "gp2"`  
+  `publicly_accessible     = true`  
+  `backup_retention_period = 14`  
+  `skip_final_snapshot     = false`  
+`}`
+
+##### **`rds_module/variables.tf`**
+
+`variable "create_db1" {`  
+  `type    = bool`  
+  `default = false`  
+`}`
+
+`variable "create_db2" {`  
+  `type    = bool`  
+  `default = false`  
+`}`
+
+##### **`main.tf` (Calling Specific Resource)**
+
+If you want to create only the first RDS instance (`db1`):
+
+`module "rds" {`  
+  `source      = "./rds_module"`  
+  `create_db1  = true`  
+  `create_db2  = false`  
+`}`  
