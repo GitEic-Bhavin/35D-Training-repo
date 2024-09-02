@@ -1,0 +1,12 @@
+---
+# handlers file for kubeadm
+- name: restart containerd
+  ansible.builtin.service:
+    name: containerd
+    state: restarted
+
+- name: enable kubernetes
+  ansible.builtin.service:
+    name: kubelet
+    enabled: true
+    state: restarted

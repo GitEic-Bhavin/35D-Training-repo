@@ -1,0 +1,8 @@
+.terraform/
+.terraform*
+*.pem
+terraform.tfstate
+terraform.tfstate.backup
+.terraform.lock.hcl
+nginx.conf
+inventory.ini

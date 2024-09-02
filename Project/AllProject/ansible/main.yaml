@@ -1,0 +1,6 @@
+---
+- name: Set up Kubernetes cluster for kubeadm
+  hosts: allnode
+  become: true
+  roles: 
+    - kubeadm
