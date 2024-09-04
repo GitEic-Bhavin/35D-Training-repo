@@ -1,0 +1,22 @@
+
+replicaCount: 1
+
+image:
+  repository: bhavin1099/nodejs-nginx
+  tag: latest
+  pullPolicy: IfNotPresent
+service:
+  type: ClusterIP
+  port: 80
+ingress:
+  enabled: false
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: []
+database:
+  host: "Enter your rds end point"
+  name: "DBName"
+  user: "EnterUsername"
+  password: "EnterPasswd"
+  port: 3306
