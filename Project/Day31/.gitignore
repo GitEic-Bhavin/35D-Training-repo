@@ -1,0 +1,8 @@
+.terraform.lock.hcl
+terraform.tfstate
+.terraform/
+variable.tf
+terraform.tfstate.backup
+variables.tf
+*.odt
+Day31.md
