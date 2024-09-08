@@ -23,5 +23,5 @@ instance_type = "t2.micro"
 region = "ap-south-1"
 
 # S3 Variable
-bucket_name = "sudarshan-webapp-prod-s3-bucket"
+bucket_name = "bhavin-webpub-s3"
 ec2_iam_role_arn     = "arn:aws:iam::339713134976:role/ec2-s3-rds-role"
