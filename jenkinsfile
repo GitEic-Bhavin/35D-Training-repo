@@ -1,6 +1,11 @@
 pipeline {
     agent any
     stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'training', url: 'https://github.com/GitEic-Bhavin/35D-Training-repo.git'
+            }
+        }
         stage('Build Docker Image') {
             steps {
                 script {
