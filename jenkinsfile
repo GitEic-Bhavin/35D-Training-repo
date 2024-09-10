@@ -23,11 +23,11 @@ pipeline {
             }
         }
         // Uncomment and configure this stage if deploying to Kubernetes
-        // stage('Deploy to k8s') {
-        //     steps {
-        //         script {
+         stage('Deploy to k8s') {
+             steps {
+                 script {
         //             kubernetesDeploy (configs: 'deploymentservice.yaml', kubeconfigId: 'k8sconfigpwd')
-                        sh 'kubectl apply -f k8sdeployJenkins.yml'
+                     sh 'kubectl apply -f k8sdeployJenkins.yml'
         //         }
         //     }
         // }
