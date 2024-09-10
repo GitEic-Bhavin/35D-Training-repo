@@ -27,6 +27,7 @@ pipeline {
         //     steps {
         //         script {
         //             kubernetesDeploy (configs: 'deploymentservice.yaml', kubeconfigId: 'k8sconfigpwd')
+                        sh 'kubectl apply -f k8sdeployJenkins.yml'
         //         }
         //     }
         // }
