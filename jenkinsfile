@@ -27,7 +27,9 @@ pipeline {
              steps {
                  script {
         //             kubernetesDeploy (configs: 'deploymentservice.yaml', kubeconfigId: 'k8sconfigpwd')
+                     withCredentials([string(credentialsID: 'kubectl-cred')]) {
                      sh 'kubectl apply -f k8sdeployJenkins.yml'
+                    }
                 }
              }
          }
