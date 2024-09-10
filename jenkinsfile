@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+    // tools{
+    //     maven 'maven_3_5_0'
+    // }
+    stages{
+        stage('Checkoout'){
+            steps{
+                // checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Java-Techie-jt/devops-automation']]])
+                git branche: 'training', url: 'https://github.com/GitEic-Bhavin/35D-Training-repo.git'
+                
+            }
+        }
+        stage('Build docker image'){
+            steps{
+                script{
+                    sh 'docker build -t bhavin1099/jenkinstaskk8s-${BUILD_NUMBER}:v1 .'
+                }
+            }
+        }
+        stage('Docker Push'){
+            steps{
+                script{
+                     withDockerRegistry(credentialsId: 'docker-cred') {
+                //    withCredentials([string(credentialsId: 'docker-cred', variable: 'dockerhubpwd')]) {
+                //    sh 'docker login -u javatechie -p ${dockerhubpwd}'
+
+}
+                   sh 'docker push bhavin1099/jenkinstaskk8s-${BUILD_NUMBER}:v1'
+                }
+            }
+        }
+        // stage('Deploy to k8s'){
+        //     steps{
+        //         script{
+        //             kubernetesDeploy (configs: 'deploymentservice.yaml',kubeconfigId: 'k8sconfigpwd')
+        //         }
+        //     }
+        // }
+    }
+}
