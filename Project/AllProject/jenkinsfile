@@ -1,0 +1,58 @@
+pipeline {
+    agent any
+
+environment {
+        
+        KUBE_CONTEXT = 'kubernetes-admin@kubernetes'  // This will be find in ~/.kube/config file.
+	// To deploy pods by jenkins pipeline , our k8s cluster authentication required to our jenkins pipeline.
+	// We have to use ~/.kube/config file as secret file while set credentials of k8s in Managed Jenkins>Credentials.
+        
+        HELM_RELEASE = 'hemjenkins'
+        // Kubernetes namespace
+        KUBE_NAMESPACE = 'default'
+        
+        DOCKER_REPO = 'bhavin1099/jenkinstaskk8s'       
+        DOCKER_TAG = "${BUILD_NUMBER}:v1"   
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'training', url: 'https://github.com/GitEic-Bhavin/35D-Training-repo.git'
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh 'docker build -t bhavin1099/jenkinstaskk8s-${BUILD_NUMBER}:v1 .'  // here, docker cred doesn't required for build.
+                }
+            }
+        }
+        stage('Docker Push') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: 'docker-cred') {     // here, docker cred required to push img.
+                        sh 'docker push bhavin1099/jenkinstaskk8s-${BUILD_NUMBER}:v1'
+                    }
+                }
+            }
+        }
+
+         stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    // Use Helm to deploy the Docker image to Kubernetes
+                    withKubeConfig([credentialsId: 'kubeadm-cred', contextName: "${KUBE_CONTEXT}"]) {
+                        sh """
+                        helm upgrade --install ${HELM_RELEASE} ./helmjenkins-0.1.0.tgz   // helm upgrade helmjenkins ./helmjenkins-0.1.0.tgz
+                            // --set image.repository=${DOCKER_REPO} \	// for update docker repo directly from here.
+                            // --set image.tag=${env.BUILD_ID} \
+                            // --namespace ${KUBE_NAMESPACE}    // Recommended to use namespace for jenkins as jenkins.
+                        """
+                    }
+                }
+            }
+        }
+    }
+}
+
